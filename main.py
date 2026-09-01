@@ -350,11 +350,14 @@ new_building = pd.DataFrame({
     "Day of Week": [day_type]
 })
 
-# Predict energy consumption
+# =========================
+# AI Prediction & Decision Support
+# =========================
+
 predicted_energy = linear_model.predict(new_building)[0]
 
 print("\n==============================")
-print(" DSS Prediction Result")
+print(" AI Prediction Result")
 print("==============================")
 
 print(
@@ -362,42 +365,143 @@ print(
     f"{predicted_energy:.2f}"
 )
 
-# Simple decision support
+# AI Consumption Level and Recommendation
 if predicted_energy >= 5000:
-    recommendation = "High energy consumption - prioritize energy efficiency measures."
+    consumption_level = "High"
+    recommendation = (
+        "Prioritize energy efficiency measures."
+    )
+
 elif predicted_energy >= 4000:
-    recommendation = "Moderate energy consumption - consider optimization measures."
+    consumption_level = "Moderate"
+    recommendation = (
+        "Consider optimization measures."
+    )
+
 else:
-    recommendation = "Lower energy consumption - continue monitoring."
+    consumption_level = "Lower"
+    recommendation = (
+        "Continue monitoring energy consumption."
+    )
 
-print("\nRecommendation:")
+print("\nAI Consumption Level:")
+print(consumption_level)
+
+print("\nAI Recommendation:")
 print(recommendation)
+
+
 # =========================
-# Export Results for Power BI
+# What-If Scenario
 # =========================
 
-# Create test set results
+what_if_building = new_building.copy()
+
+# Reduce square footage by 10%
+what_if_building["Square Footage"] = (
+    what_if_building["Square Footage"] * 0.90
+)
+
+what_if_prediction = linear_model.predict(
+    what_if_building
+)[0]
+
+estimated_reduction = (
+    predicted_energy - what_if_prediction
+)
+
+print("\n==============================")
+print(" What-If Scenario")
+print("==============================")
+
+print(
+    f"Original Square Footage: "
+    f"{square_footage:.0f}"
+)
+
+print(
+    f"10% Reduced Square Footage: "
+    f"{square_footage * 0.90:.0f}"
+)
+
+print(
+    f"Original Prediction: "
+    f"{predicted_energy:.2f}"
+)
+
+print(
+    f"What-If Prediction: "
+    f"{what_if_prediction:.2f}"
+)
+
+print(
+    f"Estimated Reduction: "
+    f"{estimated_reduction:.2f}"
+)
+
+
+# =========================
+# Export AI Results for Power BI
+# =========================
+
 powerbi_data = X_test.copy()
 
 powerbi_data["Actual Energy Consumption"] = y_test.values
+
 powerbi_data["Predicted Energy Consumption"] = linear_pred
 
-# Calculate prediction error
 powerbi_data["Prediction Error"] = (
     powerbi_data["Actual Energy Consumption"]
     - powerbi_data["Predicted Energy Consumption"]
 )
 
-# Save to CSV
+
+# AI Consumption Level
+powerbi_data["Consumption Level"] = (
+    powerbi_data["Predicted Energy Consumption"].apply(
+        lambda x:
+        "High" if x >= 5000
+        else "Moderate" if x >= 4000
+        else "Lower"
+    )
+)
+
+
+# AI Recommendation
+powerbi_data["Recommendation"] = (
+    powerbi_data["Predicted Energy Consumption"].apply(
+        lambda x:
+        "Prioritize energy efficiency measures."
+        if x >= 5000
+        else
+        "Consider optimization measures."
+        if x >= 4000
+        else
+        "Continue monitoring energy consumption."
+    )
+)
+
+
+# Save Power BI dataset
 powerbi_data.to_csv(
     "energy_consumption_powerbi.csv",
     index=False
 )
 
 print("\n==============================")
-print(" Power BI Dataset Created")
+print(" Power BI AI Dataset Created")
 print("==============================")
 
-print("File: energy_consumption_powerbi.csv")
-print("Rows:", len(powerbi_data))
-print("Columns:", powerbi_data.columns.tolist())
+print(
+    "File: energy_consumption_powerbi.csv"
+)
+
+print(
+    "Rows:",
+    len(powerbi_data)
+)
+
+print(
+    "Columns:",
+    powerbi_data.columns.tolist()
+)
